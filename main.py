@@ -7,15 +7,14 @@ from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
-async def converts_to_a_string(data: dict, key_1: str, key_2: str) -> dict:
+async def converts_to_a_string(session, data: dict, key_1: str, key_2: str) -> dict:
     try:
         urls_list = data[key_1]
         if urls_list:
             names_list = []
-            async with aiohttp.client.ClientSession() as session:
-                for url in urls_list:
-                    async with session.get(url) as res:
-                        names_list.append((await res.json()).get(key_2))
+            for url in urls_list:
+                async with session.get(url) as res:
+                    names_list.append((await res.json()).get(key_2))
             data[key_1] = ', '.join(names_list)
         else:
             data[key_1] = 'empty'
@@ -31,13 +30,13 @@ async def get_data_person(id_):
         async with session.get(HOST + f'{id_}') as response:
             all_data = await response.json()
             all_data['id'] = id_
-            await converts_to_a_string(all_data, 'films', 'title')
-            await converts_to_a_string(all_data, 'species', 'name')
-            await converts_to_a_string(all_data, 'starships', 'name')
-            await converts_to_a_string(all_data, 'vehicles', 'name')
+            await converts_to_a_string(session, all_data, 'films', 'title')
+            await converts_to_a_string(session, all_data, 'species', 'name')
+            await converts_to_a_string(session, all_data, 'starships', 'name')
+            await converts_to_a_string(session, all_data, 'vehicles', 'name')
             if all_data['homeworld']:
-                async with session.get(all_data['homeworld']) as response:
-                    all_data['homeworld'] = (await response.json()).get('name', 'empty')
+                async with session.get(all_data['homeworld']) as resp:
+                    all_data['homeworld'] = (await resp.json()).get('name', 'empty')
             else:
                 all_data['homeworld'] = 'empty'
 
